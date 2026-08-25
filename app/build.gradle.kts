@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "dev.espflasher.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "espflasher.shizoghost.com"
         minSdk = 26
-        targetSdk = 35
-        versionCode = System.getenv("ESPFLASHER_VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = System.getenv("ESPFLASHER_VERSION_NAME") ?: "1.0.0"
+        targetSdk = 36
+        versionCode = System.getenv("ESPFLASHER_VERSION_CODE")?.toIntOrNull() ?: 2
+        versionName = System.getenv("ESPFLASHER_VERSION_NAME") ?: "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
