@@ -60,6 +60,5 @@ class AuthRepository(
 
     suspend fun signOut() {
         auth.signOut()
-        signInAnonymously()
     }
 }
