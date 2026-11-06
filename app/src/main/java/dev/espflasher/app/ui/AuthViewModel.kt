@@ -42,6 +42,12 @@ class AuthViewModel(
         }
     }
 
+    fun signInWithGoogleIdToken(idToken: String) {
+        authenticate {
+            repository.signInWithGoogleIdToken(idToken)
+        }
+    }
+
     fun signInAnonymously() {
         authenticate {
             repository.signInAnonymously()
