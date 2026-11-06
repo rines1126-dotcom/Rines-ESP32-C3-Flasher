@@ -12,7 +12,20 @@
           "package_name": "espflasher.shizoghost.com"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1068495879470-v3edked0dctq03brtdp65iqcu33bka7j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "espflasher.shizoghost.com",
+            "certificate_hash": "95dee9a4d4daa097cd50d9bb19d7d1ceb5067b68"
+          }
+        },
+        {
+          "client_id": "1068495879470-ncs6h0tka8pl7rtj1gmet9p1shudav7d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCOceEIFt-kWU7niW_pma_214VVoqSzZZw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1068495879470-ncs6h0tka8pl7rtj1gmet9p1shudav7d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
