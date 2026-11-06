@@ -1,3 +1,4 @@
+
 package dev.espflasher.app
 
 import android.net.Uri
@@ -13,6 +14,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import dev.espflasher.app.ui.AuthScreen
+import dev.espflasher.app.ui.AuthViewModel
+import dev.espflasher.app.ui.AuthViewModelFactory
 import dev.espflasher.app.ui.FlasherViewModel
 import dev.espflasher.app.ui.HomeScreen
 import dev.espflasher.app.ui.SettingsScreen
@@ -21,24 +25,51 @@ import dev.espflasher.app.ui.i18n.resolveUiText
 import dev.espflasher.app.ui.theme.EspFlasherTheme
 
 class MainActivity : ComponentActivity() {
+
     private val vm: FlasherViewModel by viewModels()
+
+    private val authVm: AuthViewModel by viewModels {
+        AuthViewModelFactory()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         consumeIncoming()
+
         setContent {
             val state by vm.state.collectAsState()
+            val authState by authVm.state.collectAsState()
+
             var settings by remember { mutableStateOf(false) }
-            CompositionLocalProvider(LocalUiText provides resolveUiText(state.languageTag)) {
-                EspFlasherTheme(themeMode = state.themeMode, accent = state.accent) {
-                    if (settings) {
-                        SettingsScreen(vm) { settings = false }
+
+            CompositionLocalProvider(
+                LocalUiText provides resolveUiText(state.languageTag)
+            ) {
+                EspFlasherTheme(
+                    themeMode = state.themeMode,
+                    accent = state.accent
+                ) {
+                    if (!authState.isSignedIn) {
+                        AuthScreen(
+                            vm = authVm,
+                            onContinueAsGuest = {
+                                authVm.signInAnonymously()
+                            }
+                        )
+                    } else if (settings) {
+                        SettingsScreen(vm) {
+                            settings = false
+                        }
                     } else {
                         HomeScreen(
                             vm = vm,
-                            onPickFirmware = { uri -> loadUri(uri) },
-                            onOpenSettings = { settings = true },
+                            onPickFirmware = { uri ->
+                                loadUri(uri)
+                            },
+                            onOpenSettings = {
+                                settings = true
+                            }
                         )
                     }
                 }
@@ -53,7 +84,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun consumeIncoming() {
-        vm.consumeShareIntent(intent) { uri -> readUri(uri) }
+        vm.consumeShareIntent(intent) { uri ->
+            readUri(uri)
+        }
     }
 
     private fun loadUri(uri: Uri) {
@@ -62,10 +95,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun readUri(uri: Uri): Pair<String, ByteArray>? {
-        val name = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-            if (c.moveToFirst()) c.getString(0) else "firmware.bin"
+        val name = contentResolver.query(
+            uri,
+            arrayOf(OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getString(0)
+            } else {
+                "firmware.bin"
+            }
         } ?: "firmware.bin"
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+
+        val bytes = contentResolver.openInputStream(uri)
+            ?.use { it.readBytes() }
+            ?: return null
+
         return name to bytes
     }
 }
