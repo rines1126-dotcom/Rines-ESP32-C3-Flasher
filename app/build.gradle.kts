@@ -14,10 +14,8 @@ android {
         applicationId = "espflasher.shizoghost.com"
         minSdk = 26
         targetSdk = 36
-
         versionCode = System.getenv("ESPFLASHER_VERSION_CODE")?.toIntOrNull() ?: 2
         versionName = System.getenv("ESPFLASHER_VERSION_NAME") ?: "1.0.1"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -29,13 +27,10 @@ android {
         if (!keystorePath.isNullOrBlank()) {
             create("release") {
                 storeFile = file(keystorePath)
-
                 storePassword = System.getenv("ESPFLASHER_STORE_PASSWORD")
                     ?: System.getenv("PIFLASH_STORE_PASSWORD")
-
                 keyAlias = System.getenv("ESPFLASHER_KEY_ALIAS")
                     ?: System.getenv("PIFLASH_KEY_ALIAS")
-
                 keyPassword = System.getenv("ESPFLASHER_KEY_PASSWORD")
                     ?: System.getenv("PIFLASH_KEY_PASSWORD")
             }
@@ -112,6 +107,7 @@ dependencies {
 
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     // USB Serial
     implementation("com.github.mik3y:usb-serial-for-android:3.8.1")
