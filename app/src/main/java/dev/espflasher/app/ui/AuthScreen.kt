@@ -1,6 +1,6 @@
-
 package dev.espflasher.app.ui
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Material
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -23,9 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
@@ -33,6 +35,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import dev.espflasher.app.R
 import kotlinx.coroutines.launch
 
 @Composable
@@ -42,26 +45,23 @@ fun AuthScreen(
 ) {
     val state by vm.state.collectAsState()
 
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    var isRegister by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var googleLoading by remember { mutableStateOf(false) }
+    var isRegisterMode by remember { mutableStateOf(false) }
     var googleError by remember { mutableStateOf<String?>(null) }
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val credentialManager = remember {
         CredentialManager.create(context)
     }
 
     fun signInWithGoogle() {
         scope.launch {
-            googleLoading = true
             googleError = null
 
             try {
-                val googleIdOption = GetGoogleIdOption.Builder()
+                val googleOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(
                         context.getString(R.string.default_web_client_id)
@@ -70,12 +70,12 @@ fun AuthScreen(
                     .build()
 
                 val request = GetCredentialRequest.Builder()
-                    .addCredentialOption(googleIdOption)
+                    .addCredentialOption(googleOption)
                     .build()
 
                 val result = credentialManager.getCredential(
-                    context = context,
-                    request = request
+                    context,
+                    request
                 )
 
                 val credential = result.credential
@@ -94,13 +94,12 @@ fun AuthScreen(
                         googleCredential.idToken
                     )
                 } else {
-                    googleError = "Invalid Google account credential."
+                    googleError = "Invalid Google credential."
                 }
+
             } catch (e: Exception) {
                 googleError = e.message
-                    ?: "Google Sign-In was cancelled or failed."
-            } finally {
-                googleLoading = false
+                    ?: "Google sign-in failed."
             }
         }
     }
@@ -108,23 +107,26 @@ fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
         Text(
             text = "Rines ESP32-C3 Flasher",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineSmall
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = if (isRegister) {
+            text = if (isRegisterMode) {
                 "Create your account"
             } else {
                 "Sign in to your account"
             },
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -132,12 +134,9 @@ fun AuthScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email
-            )
+            label = { Text("Email") },
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -145,20 +144,17 @@ fun AuthScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
+            label = { Text("Password") },
             singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password
-            )
+            visualTransformation = PasswordVisualTransformation()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
-                if (isRegister) {
+                if (isRegisterMode) {
                     vm.register(email, password)
                 } else {
                     vm.signIn(email, password)
@@ -166,74 +162,80 @@ fun AuthScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading &&
-                !googleLoading &&
                 email.isNotBlank() &&
-                password.length >= 6
-        ) {
-            Text(if (isRegister) "Register" else "Sign In")
-        }
-
-        TextButton(
-            onClick = {
-                isRegister = !isRegister
-                vm.clearMessages()
-                googleError = null
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading && !googleLoading
+                password.isNotBlank()
         ) {
             Text(
-                if (isRegister) {
-                    "Already have an account? Sign In"
+                if (isRegisterMode) {
+                    "Register"
                 } else {
-                    "Create a new account"
+                    "Sign In"
                 }
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        TextButton(
+            onClick = {
+                isRegisterMode = !isRegisterMode
+                vm.clearMessages()
+            },
+            enabled = !state.isLoading
+        ) {
+            Text(
+                if (isRegisterMode) {
+                    "Already have an account? Sign In"
+                } else {
+                    "Don't have an account? Register"
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         OutlinedButton(
             onClick = { signInWithGoogle() },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading && !googleLoading
+            enabled = !state.isLoading
         ) {
             Text("Continue with Google")
         }
 
-        TextButton(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
             onClick = onContinueAsGuest,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading && !googleLoading
+            enabled = !state.isLoading
         ) {
             Text("Continue as Guest")
         }
 
-        if (state.isLoading || googleLoading) {
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        if (state.isLoading) {
             CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
         state.error?.let {
-            Spacer(modifier = Modifier.height(12.dp))
             Text(
-                it,
+                text = it,
                 color = MaterialTheme.colorScheme.error
             )
         }
 
         googleError?.let {
-            Spacer(modifier = Modifier.height(12.dp))
             Text(
-                it,
+                text = it,
                 color = MaterialTheme.colorScheme.error
             )
         }
 
         state.message?.let {
-            Spacer(modifier = Modifier.height(12.dp))
             Text(
-                it,
+                text = it,
                 color = MaterialTheme.colorScheme.primary
             )
         }
