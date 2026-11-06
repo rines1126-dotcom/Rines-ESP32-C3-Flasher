@@ -38,6 +38,9 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      - name: Show SHA-1 fingerprint
+        run: ./gradlew :app:signingReport
+
       - uses: actions/upload-artifact@v4
         with:
           name: ESPFlasher-debug
