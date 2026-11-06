@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1068495879470-jpo9fonjdvuspihe4vmf3iiijpbo64rn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "espflasher.shizoghost.com",
+            "certificate_hash": "e3987ca101d9c0ab898442f162b63c385f232a88"
+          }
+        },
+        {
           "client_id": "1068495879470-v3edked0dctq03brtdp65iqcu33bka7j.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
