@@ -14,8 +14,10 @@ android {
         applicationId = "espflasher.shizoghost.com"
         minSdk = 26
         targetSdk = 36
+
         versionCode = System.getenv("ESPFLASHER_VERSION_CODE")?.toIntOrNull() ?: 2
         versionName = System.getenv("ESPFLASHER_VERSION_NAME") ?: "1.0.1"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -27,10 +29,13 @@ android {
         if (!keystorePath.isNullOrBlank()) {
             create("release") {
                 storeFile = file(keystorePath)
+
                 storePassword = System.getenv("ESPFLASHER_STORE_PASSWORD")
                     ?: System.getenv("PIFLASH_STORE_PASSWORD")
+
                 keyAlias = System.getenv("ESPFLASHER_KEY_ALIAS")
                     ?: System.getenv("PIFLASH_KEY_ALIAS")
+
                 keyPassword = System.getenv("ESPFLASHER_KEY_PASSWORD")
                     ?: System.getenv("PIFLASH_KEY_PASSWORD")
             }
@@ -95,6 +100,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
@@ -122,8 +128,8 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    // Google Mobile Ads - Next-Gen SDK
-    implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.6.0")
+    // Google Mobile Ads SDK
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
 
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
