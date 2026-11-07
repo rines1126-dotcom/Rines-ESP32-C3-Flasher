@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,11 +24,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.espflasher.app.R
 import dev.espflasher.app.domain.ChipId
 import dev.espflasher.app.domain.FlashPhase
 import dev.espflasher.app.domain.FlashStateMachine
@@ -64,19 +68,7 @@ fun HomeScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
-                title = {
-                    Column {
-                        Text(
-                            t.appName,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            "Flash ESP32 Family",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
+                title = {},
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(
@@ -151,6 +143,31 @@ private fun HomePane(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.rines_logo),
+                contentDescription = "Rines ESP32 Flasher logo",
+                modifier = Modifier.size(148.dp),
+                contentScale = ContentScale.Fit
+            )
+            Text(
+                "Rines ESP32 Flasher",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Flash ESP32 Family",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         state.error?.let { err ->
             if (!state.needBootButton) {
                 ElevatedCard(
