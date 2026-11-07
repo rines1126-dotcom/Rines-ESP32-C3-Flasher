@@ -21,6 +21,11 @@
         android:theme="@style/Theme.EspFlasher"
         android:enableOnBackInvokedCallback="true">
 
+        <!-- AdMob App ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8175752036808539~2580549304" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
