@@ -151,7 +151,7 @@ private fun HomePane(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.rines_header_logo),
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Rines ESP32 Flasher logo",
                 modifier = Modifier
                     .fillMaxWidth()
