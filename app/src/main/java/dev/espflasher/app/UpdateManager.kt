@@ -5,6 +5,8 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -58,7 +60,6 @@ object UpdateManager {
                 val releaseName = release.optString("name", "")
                 val tagName = release.optString("tag_name", "")
 
-                // Get version from release title first, then tag.
                 val versionPattern = Regex("""\d+\.\d+(?:\.\d+)*""")
 
                 val version = versionPattern.find(releaseName)?.value
@@ -104,6 +105,98 @@ object UpdateManager {
                 connection.disconnect()
             }
         }
+
+    suspend fun downloadUpdate(
+        context: Context,
+        apkUrl: String,
+        onProgress: (Int) -> Unit
+    ): File = withContext(Dispatchers.IO) {
+
+        val updateDirectory = File(context.cacheDir, "updates")
+
+        if (!updateDirectory.exists() && !updateDirectory.mkdirs()) {
+            throw Exception("Unable to create update folder.")
+        }
+
+        val temporaryFile = File(updateDirectory, "update.apk.part")
+        val apkFile = File(updateDirectory, "update.apk")
+
+        val connection =
+            URL(apkUrl).openConnection() as HttpURLConnection
+
+        try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 20000
+            connection.readTimeout = 30000
+            connection.setRequestProperty(
+                "User-Agent",
+                "Rines-ESP32-C3-Flasher"
+            )
+
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                throw Exception(
+                    "Download failed: HTTP ${connection.responseCode}"
+                )
+            }
+
+            val totalBytes = connection.contentLengthLong
+            var downloadedBytes = 0L
+
+            connection.inputStream.use { input ->
+                FileOutputStream(temporaryFile).use { output ->
+
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+
+                    while (input.read(buffer).also {
+                            bytesRead = it
+                        } != -1
+                    ) {
+                        output.write(buffer, 0, bytesRead)
+                        downloadedBytes += bytesRead
+
+                        if (totalBytes > 0) {
+                            val progress =
+                                ((downloadedBytes * 100) / totalBytes)
+                                    .toInt()
+                                    .coerceIn(0, 100)
+
+                            withContext(Dispatchers.Main) {
+                                onProgress(progress)
+                            }
+                        }
+                    }
+
+                    output.flush()
+                }
+            }
+
+            if (!temporaryFile.exists() || temporaryFile.length() == 0L) {
+                throw Exception("Downloaded APK is empty.")
+            }
+
+            if (apkFile.exists()) {
+                apkFile.delete()
+            }
+
+            if (!temporaryFile.renameTo(apkFile)) {
+                temporaryFile.copyTo(apkFile, overwrite = true)
+                temporaryFile.delete()
+            }
+
+            withContext(Dispatchers.Main) {
+                onProgress(100)
+            }
+
+            apkFile
+
+        } catch (e: Exception) {
+            temporaryFile.delete()
+            throw e
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     @Suppress("DEPRECATION")
     private fun getCurrentVersion(context: Context): String {
