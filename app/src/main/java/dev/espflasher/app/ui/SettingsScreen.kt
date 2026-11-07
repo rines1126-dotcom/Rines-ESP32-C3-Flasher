@@ -4,6 +4,9 @@ package dev.espflasher.app.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import dev.espflasher.app.UpdateInfo
 import dev.espflasher.app.UpdateManager
 import dev.espflasher.app.domain.prefs.Accent
@@ -28,6 +32,7 @@ import dev.espflasher.app.domain.prefs.ThemeMode
 import dev.espflasher.app.ui.i18n.LocalUiText
 import dev.espflasher.app.ui.theme.accentSwatch
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +44,6 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
 
     val dynamicOk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-    // Keep the app in English and replace the old System theme with Light.
     LaunchedEffect(Unit) {
         vm.setLanguage("en")
 
@@ -56,8 +60,72 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
     }
 
     var isCheckingUpdate by remember { mutableStateOf(false) }
+    var isDownloading by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableIntStateOf(0) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var availableUpdate by remember { mutableStateOf<UpdateInfo?>(null) }
+    var downloadedApk by remember { mutableStateOf<File?>(null) }
+
+    fun launchInstaller(apkFile: File) {
+        try {
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                apkFile
+            )
+
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(
+                    uri,
+                    "application/vnd.android.package-archive"
+                )
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            context.startActivity(installIntent)
+        } catch (e: Exception) {
+            updateMessage =
+                "Unable to open the APK installer: ${e.message}"
+        }
+    }
+
+    val installPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) {
+            val apkFile = downloadedApk
+
+            if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                context.packageManager.canRequestPackageInstalls()
+            ) {
+                if (apkFile != null && apkFile.exists()) {
+                    launchInstaller(apkFile)
+                }
+            } else {
+                updateMessage =
+                    "Please allow Install unknown apps, then try installing again."
+            }
+        }
+
+    fun installDownloadedApk(apkFile: File) {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !context.packageManager.canRequestPackageInstalls()
+        ) {
+            downloadedApk = apkFile
+
+            val settingsIntent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${context.packageName}")
+            )
+
+            installPermissionLauncher.launch(settingsIntent)
+        } else {
+            launchInstaller(apkFile)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -199,7 +267,7 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                         }
                     }
                 },
-                enabled = !isCheckingUpdate,
+                enabled = !isCheckingUpdate && !isDownloading,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (isCheckingUpdate) {
@@ -268,11 +336,38 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
             },
             confirmButton = {
                 TextButton(
+                    enabled = !isDownloading,
                     onClick = {
                         availableUpdate = null
+
+                        scope.launch {
+                            isDownloading = true
+                            downloadProgress = 0
+                            updateMessage = null
+
+                            try {
+                                val apkFile =
+                                    UpdateManager.downloadUpdate(
+                                        context,
+                                        update.apkUrl
+                                    ) { progress ->
+                                        downloadProgress = progress
+                                    }
+
+                                downloadProgress = 100
+                                downloadedApk = apkFile
+                                installDownloadedApk(apkFile)
+
+                            } catch (e: Exception) {
+                                updateMessage =
+                                    "APK download failed: ${e.message}"
+                            } finally {
+                                isDownloading = false
+                            }
+                        }
                     },
                 ) {
-                    Text("OK")
+                    Text("Download and Install")
                 }
             },
             dismissButton = {
@@ -284,6 +379,29 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                     Text("Close")
                 }
             },
+        )
+    }
+
+    if (isDownloading) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Text("Downloading Update")
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    LinearProgressIndicator(
+                        progress = downloadProgress / 100f,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Text("$downloadProgress%")
+                    Text("Please wait while the APK is downloading.")
+                }
+            },
+            confirmButton = {},
         )
     }
 }
