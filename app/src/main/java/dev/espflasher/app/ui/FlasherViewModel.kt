@@ -150,16 +150,20 @@ class FlasherViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun addFirmware(uri: Uri, name: String, bytes: ByteArray) {
+        // Merged firmware mode: keep exactly one BIN and always flash it at 0x0.
+        // Selecting another file replaces the current firmware instead of appending it.
         val inspection = FirmwareInspector.inspect(bytes, name)
-        val chip = _state.value.config.chipOverride ?: _state.value.device?.chipId ?: inspection.chipId
-        val address = _state.value.config.flashAddress ?: inspection.suggestedAddress
-        val image = FirmwareImage(name, bytes, address)
+        val image = FirmwareImage(name, bytes, 0x0)
+
         _state.update {
-            it.copy(images = it.images + image, inspections = it.inspections + inspection)
+            it.copy(
+                images = listOf(image),
+                inspections = listOf(inspection)
+            )
         }
-        log("Firmware: $name (${bytes.size} bytes)")
+
+        log("Firmware selected: $name (${bytes.size} bytes) at 0x0")
         inspection.warnings.forEach { log(it) }
-        chip // keep for future address override
         uri.toString()
     }
 
