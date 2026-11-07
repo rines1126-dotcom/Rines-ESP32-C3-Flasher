@@ -1,4 +1,3 @@
-
 package dev.espflasher.app.ui
 
 import android.net.Uri
@@ -405,17 +404,19 @@ private fun OptionsCard(state: UiState, vm: FlasherViewModel) {
             if (advanced) {
                 Text(t.chipOverride, style = MaterialTheme.typography.labelMedium)
 
-                ChipId.entries.forEach { id ->
-                    FilterChip(
-                        selected = state.config.chipOverride == id,
-                        onClick = {
-                            vm.updateConfig {
-                                it.copy(chipOverride = id)
-                            }
-                        },
-                        label = { Text(id.label) },
-                    )
-                }
+                ChipId.entries
+                    .filterNot { it == ChipId.ESP8266 }
+                    .forEach { id ->
+                        FilterChip(
+                            selected = state.config.chipOverride == id,
+                            onClick = {
+                                vm.updateConfig {
+                                    it.copy(chipOverride = id)
+                                }
+                            },
+                            label = { Text(id.label) },
+                        )
+                    }
 
                 FilterChip(
                     selected = state.config.chipOverride == null,
