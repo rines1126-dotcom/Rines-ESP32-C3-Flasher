@@ -77,18 +77,24 @@ object UpdateManager {
 
                 var apkUrl: String? = null
 
+                // Piliin lamang ang signed release APK.
                 for (i in 0 until assets.length()) {
                     val asset = assets.getJSONObject(i)
                     val name = asset.optString("name")
 
-                    if (name.endsWith(".apk", ignoreCase = true)) {
+                    if (
+                        name.equals("app-release.apk", ignoreCase = true) ||
+                        name.endsWith("-release.apk", ignoreCase = true)
+                    ) {
                         apkUrl = asset.optString("browser_download_url")
                         break
                     }
                 }
 
                 if (apkUrl.isNullOrBlank()) {
-                    throw Exception("No APK found in the latest release.")
+                    throw Exception(
+                        "No signed release APK found. Check GitHub Release assets."
+                    )
                 }
 
                 UpdateInfo(
