@@ -16,8 +16,7 @@ class AdManager {
     companion object {
         private const val TAG = "RinesAdManager"
 
-        // Google official test interstitial ad ID.
-        // Palitan lang ng live ad unit ID kapag handa nang i-release.
+        // Google's official test interstitial ad unit ID
         private const val TEST_AD_UNIT_ID =
             "ca-app-pub-3940256099942544/1033173712"
     }
@@ -80,10 +79,7 @@ class AdManager {
                 override fun onAdFailedToShowFullScreenContent(
                     adError: AdError
                 ) {
-                    Log.e(
-                        TAG,
-                        "Ad failed to show: ${adError.message}"
-                    )
+                    Log.e(TAG, "Ad failed to show: ${adError.message}")
                     onFinished()
                     loadInterstitialAd(activity)
                 }
