@@ -40,9 +40,7 @@ object UpdateManager {
                 )
 
                 if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                    throw Exception(
-                        "GitHub error: ${connection.responseCode}"
-                    )
+                    throw Exception("GitHub error: ${connection.responseCode}")
                 }
 
                 val response = connection.inputStream
@@ -57,8 +55,15 @@ object UpdateManager {
                     return@withContext null
                 }
 
-                val version = release.optString("tag_name")
-                    .removePrefix("v")
+                val releaseName = release.optString("name", "")
+                val tagName = release.optString("tag_name", "")
+
+                // Get version from release title first, then tag.
+                val versionPattern = Regex("""\d+\.\d+(?:\.\d+)*""")
+
+                val version = versionPattern.find(releaseName)?.value
+                    ?: versionPattern.find(tagName)?.value
+                    ?: throw Exception("Invalid release version.")
 
                 val currentVersion = getCurrentVersion(context)
 
@@ -67,7 +72,7 @@ object UpdateManager {
                 }
 
                 val assets = release.optJSONArray("assets")
-                    ?: return@withContext null
+                    ?: throw Exception("No release assets found.")
 
                 var apkUrl: String? = null
 
@@ -82,13 +87,16 @@ object UpdateManager {
                 }
 
                 if (apkUrl.isNullOrBlank()) {
-                    return@withContext null
+                    throw Exception("No APK found in the latest release.")
                 }
 
                 UpdateInfo(
                     version = version,
-                    releaseName = release.optString("name", version),
-                    releaseNotes = release.optString("body", "No release notes."),
+                    releaseName = releaseName.ifBlank { "Version $version" },
+                    releaseNotes = release.optString(
+                        "body",
+                        "No release notes."
+                    ),
                     apkUrl = apkUrl
                 )
 
@@ -108,8 +116,13 @@ object UpdateManager {
         latest: String,
         current: String
     ): Boolean {
-        val latestParts = latest.split(".").map { it.toIntOrNull() ?: 0 }
-        val currentParts = current.split(".").map { it.toIntOrNull() ?: 0 }
+        val latestParts = latest.split(".").map {
+            it.toIntOrNull() ?: 0
+        }
+
+        val currentParts = current.split(".").map {
+            it.toIntOrNull() ?: 0
+        }
 
         val count = maxOf(latestParts.size, currentParts.size)
 
