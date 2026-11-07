@@ -1,20 +1,23 @@
+
 package dev.espflasher.app
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
-import com.google.android.libraries.ads.mobile.sdk.AdRequest
-import com.google.android.libraries.ads.mobile.sdk.AdLoadCallback
-import com.google.android.libraries.ads.mobile.sdk.LoadAdError
-import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd
-import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEventCallback
-import com.google.android.libraries.ads.mobile.sdk.FullScreenContentError
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
 class AdManager {
 
     companion object {
         private const val TAG = "RinesAdManager"
 
-        // Google official test interstitial ID
+        // Google official test interstitial ad ID.
+        // Palitan lang ng live ad unit ID kapag handa nang i-release.
         private const val TEST_AD_UNIT_ID =
             "ca-app-pub-3940256099942544/1033173712"
     }
@@ -22,14 +25,18 @@ class AdManager {
     private var interstitialAd: InterstitialAd? = null
     private var isLoading = false
 
-    fun loadInterstitialAd() {
+    fun loadInterstitialAd(context: Context) {
         if (isLoading || interstitialAd != null) return
 
         isLoading = true
 
+        val adRequest = AdRequest.Builder().build()
+
         InterstitialAd.load(
-            AdRequest.Builder(TEST_AD_UNIT_ID).build(),
-            object : AdLoadCallback<InterstitialAd> {
+            context,
+            TEST_AD_UNIT_ID,
+            adRequest,
+            object : InterstitialAdLoadCallback() {
 
                 override fun onAdLoaded(ad: InterstitialAd) {
                     interstitialAd = ad
@@ -37,10 +44,10 @@ class AdManager {
                     Log.d(TAG, "Test interstitial ad loaded.")
                 }
 
-                override fun onAdFailedToLoad(adError: LoadAdError) {
+                override fun onAdFailedToLoad(error: LoadAdError) {
                     interstitialAd = null
                     isLoading = false
-                    Log.e(TAG, "Ad failed to load: ${adError.message}")
+                    Log.e(TAG, "Ad failed to load: ${error.message}")
                 }
             }
         )
@@ -55,30 +62,30 @@ class AdManager {
         if (ad == null) {
             Log.d(TAG, "Ad not ready. Continue without ad.")
             onFinished()
-            loadInterstitialAd()
+            loadInterstitialAd(activity)
             return
         }
 
         interstitialAd = null
 
-        ad.adEventCallback =
-            object : InterstitialAdEventCallback {
+        ad.fullScreenContentCallback =
+            object : FullScreenContentCallback() {
 
                 override fun onAdDismissedFullScreenContent() {
                     Log.d(TAG, "Ad dismissed.")
                     onFinished()
-                    loadInterstitialAd()
+                    loadInterstitialAd(activity)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(
-                    fullScreenContentError: FullScreenContentError
+                    adError: AdError
                 ) {
                     Log.e(
                         TAG,
-                        "Ad failed to show: ${fullScreenContentError.message}"
+                        "Ad failed to show: ${adError.message}"
                     )
                     onFinished()
-                    loadInterstitialAd()
+                    loadInterstitialAd(activity)
                 }
             }
 
