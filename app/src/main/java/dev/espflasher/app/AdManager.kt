@@ -1,22 +1,22 @@
-
 package dev.espflasher.app
 
 import android.app.Activity
 import android.util.Log
 import com.google.android.libraries.ads.mobile.sdk.AdRequest
+import com.google.android.libraries.ads.mobile.sdk.AdLoadCallback
 import com.google.android.libraries.ads.mobile.sdk.LoadAdError
-import com.google.android.libraries.ads.mobile.sdk.ad.AdLoadCallback
-import com.google.android.libraries.ads.mobile.sdk.ad.interstitial.InterstitialAd
-import com.google.android.libraries.ads.mobile.sdk.ad.interstitial.InterstitialAdEventCallback
+import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd
+import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEventCallback
+import com.google.android.libraries.ads.mobile.sdk.FullScreenContentError
 
 class AdManager {
 
     companion object {
         private const val TAG = "RinesAdManager"
 
-        // Official Google test interstitial ad unit ID
+        // Google official test interstitial ID
         private const val TEST_AD_UNIT_ID =
-            "/6499/example/interstitial"
+            "ca-app-pub-3940256099942544/1033173712"
     }
 
     private var interstitialAd: InterstitialAd? = null
@@ -71,9 +71,12 @@ class AdManager {
                 }
 
                 override fun onAdFailedToShowFullScreenContent(
-                    error: com.google.android.libraries.ads.mobile.sdk.AdError
+                    fullScreenContentError: FullScreenContentError
                 ) {
-                    Log.e(TAG, "Ad failed to show: ${error.message}")
+                    Log.e(
+                        TAG,
+                        "Ad failed to show: ${fullScreenContentError.message}"
+                    )
                     onFinished()
                     loadInterstitialAd()
                 }
