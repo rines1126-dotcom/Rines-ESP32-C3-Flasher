@@ -40,6 +40,13 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
 
     val dynamicOk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+    val currentVersion = remember {
+        @Suppress("DEPRECATION")
+        context.packageManager
+            .getPackageInfo(context.packageName, 0)
+            .versionName ?: "Unknown"
+    }
+
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var availableUpdate by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -163,9 +170,12 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
 
             HorizontalDivider()
 
+            Text("App Updates", style = MaterialTheme.typography.titleSmall)
+
             Text(
-                "App Updates",
-                style = MaterialTheme.typography.titleSmall,
+                "Current Version: $currentVersion",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Button(
@@ -176,14 +186,12 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                         availableUpdate = null
 
                         try {
-                            val result =
-                                UpdateManager.checkForUpdate(context)
-
+                            val result = UpdateManager.checkForUpdate(context)
                             if (result != null) {
                                 availableUpdate = result
                             } else {
                                 updateMessage =
-                                    "You're using the latest version."
+                                    "You're using the latest version ($currentVersion)."
                             }
                         } catch (e: Exception) {
                             updateMessage =
@@ -216,17 +224,21 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                 )
             }
 
+            HorizontalDivider()
+
             TextButton(
                 onClick = {
                     context.startActivity(
                         Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("https://janisxyz.github.io/esp-flasher/"),
+                            Uri.parse(
+                                "https://github.com/rines1126-dotcom/Rines-ESP32-C3-Flasher/blob/main/docs/privacy-policy/index.html"
+                            ),
                         ),
                     )
                 },
             ) {
-                Text(t.privacyPolicy)
+                Text("Privacy Policy")
             }
 
             Text(
@@ -239,36 +251,26 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
 
     availableUpdate?.let { update ->
         AlertDialog(
-            onDismissRequest = {
-                availableUpdate = null
-            },
-            title = {
-                Text("Update Available")
-            },
+            onDismissRequest = { availableUpdate = null },
+            title = { Text("Update Available") },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(update.releaseName)
-                    Text("Version: ${update.version}")
+                    Text("Current Version: $currentVersion")
+                    Text("Latest Version: ${update.version}")
+                    Text("Release Notes:")
                     Text(update.releaseNotes)
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        availableUpdate = null
-                    },
-                ) {
+                TextButton(onClick = { availableUpdate = null }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        availableUpdate = null
-                    },
-                ) {
+                TextButton(onClick = { availableUpdate = null }) {
                     Text("Close")
                 }
             },
