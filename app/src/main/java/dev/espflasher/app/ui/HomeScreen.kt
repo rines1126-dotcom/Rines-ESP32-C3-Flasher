@@ -1,3 +1,4 @@
+
 package dev.espflasher.app.ui
 
 import android.net.Uri
@@ -70,7 +71,7 @@ fun HomeScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            t.homeIntro,
+                            "Flash ESP32 Family",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -242,7 +243,10 @@ private fun DeviceCard(state: UiState, vm: FlasherViewModel) {
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
-                Text(t.plugInHint, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "Connect an ESP32-family board using USB OTG.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(Modifier.height(12.dp))
 
                 Button(
