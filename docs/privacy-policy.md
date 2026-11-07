@@ -1,45 +1,53 @@
-# Privacy Policy for ESP Flasher
+# Privacy Policy – Rines ESP32-C3 Flasher
 
-**Effective date:** 20 August 2026  
-**App:** ESP Flasher  
-**Package:** `espflasher.shizoghost.com`  
-**Developer:** Janis Schelling (shizoghost)  
-**Contact:** [shizoghost@exdonuts.com](mailto:shizoghost@exdonuts.com)
+**Last Updated: November 7, 2026**
 
-Canonical HTML: <https://janisxyz.github.io/esp-flasher/privacy-policy>
+## 1. Introduction
 
-ESP Flasher is a local utility. It flashes ESP8266 and ESP32 firmware from your phone to a USB-OTG connected board.
+Rines ESP32-C3 Flasher respects your privacy. This policy explains how information may be handled when you use the application.
 
-## Data we collect
+## 2. Information and Services
 
-ESP Flasher does **not** collect, sell, share, or transmit personal data.
+The application uses the following third-party services:
 
-- No accounts
-- No analytics or crash reporting SDKs
-- No advertising
-- No internet permission
+- **Firebase Authentication:** Used to provide Guest, Google, and Email account sign-in.
+- **Google Mobile Ads (AdMob):** Used to display advertisements. Google may collect device information, advertising identifiers, IP address, and ad interaction data according to its privacy policies.
+- **GitHub:** Used to retrieve application release information and updates.
 
-## Data that stays on the device
+These services may process information according to their respective privacy policies.
 
-Firmware `.bin` files you pick are read locally and written to the connected chip. They are not uploaded anywhere.
+## 3. Firmware and USB Access
 
-Language, theme, verify-after-flash, erase-before-flash, and similar settings are stored in the app’s private preferences on this phone. Android backup is disabled for this app, so settings are not copied to cloud backup. Uninstalling the app deletes them.
+The application allows users to select firmware files and transfer them to supported ESP devices through USB OTG.
 
-USB serial traffic stays between the phone and the board. Technical logs shown in the app are kept in memory and are not sent anywhere.
+Firmware files selected for flashing are processed by the application for the flashing operation. The application developer does not receive these files through the flashing process.
 
-## Permissions
+## 4. Data Storage
 
-- **USB host** is required to talk to an ESP board.
-- Storage access is limited to the firmware file you pick through the system file picker.
+Account information is handled through Firebase Authentication. Application settings and other locally stored information may remain on your device.
 
-## Children
+## 5. Third-Party Privacy Policies
 
-The app is not directed at children and does not knowingly collect data from anyone.
+Please review the privacy policies of the services used by the application:
 
-## Changes
+- Google: https://policies.google.com/privacy
+- Firebase: https://firebase.google.com/support/privacy
+- AdMob: https://support.google.com/admob/answer/6128543
 
-If this policy changes, we will update this page and the date above.
+## 6. Children's Privacy
 
-## Not affiliated
+The application is not specifically designed to collect personal information from children.
 
-ESP Flasher is an independent tool. It is not affiliated with, endorsed by, or sponsored by Espressif Systems.
+## 7. Changes to This Policy
+
+This Privacy Policy may be updated when application features or data practices change. Updates will be published in this repository.
+
+## 8. Contact
+
+For questions or concerns about this Privacy Policy, please contact the developer through the GitHub repository:
+
+https://github.com/rines1126-dotcom/Rines-ESP32-C3-Flasher
+
+---
+
+**Rines ESP32-C3 Flasher**
