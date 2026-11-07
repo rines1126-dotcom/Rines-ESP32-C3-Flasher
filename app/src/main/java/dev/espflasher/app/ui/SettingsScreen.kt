@@ -1,6 +1,7 @@
 
 package dev.espflasher.app.ui
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -74,11 +75,12 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                 apkFile
             )
 
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+            val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
                 setDataAndType(
                     uri,
                     "application/vnd.android.package-archive"
                 )
+                clipData = ClipData.newRawUri("APK Update", uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -86,7 +88,7 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
             context.startActivity(installIntent)
         } catch (e: Exception) {
             updateMessage =
-                "Unable to open the APK installer: ${e.message}"
+                "Unable to open APK installer: ${e.message}"
         }
     }
 
