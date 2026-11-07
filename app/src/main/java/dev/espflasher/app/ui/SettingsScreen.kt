@@ -183,12 +183,11 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                                 availableUpdate = result
                             } else {
                                 updateMessage =
-                                    "Walang available na bagong update."
+                                    "You're using the latest version."
                             }
                         } catch (e: Exception) {
                             updateMessage =
-                                "Hindi ma-check ang update. " +
-                                (e.message ?: "Subukan muli mamaya.")
+                                "Unable to check for updates. Please try again later."
                         } finally {
                             isCheckingUpdate = false
                         }
