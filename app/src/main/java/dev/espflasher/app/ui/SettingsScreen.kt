@@ -5,7 +5,6 @@ import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.hardware.usb.UsbManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,32 +31,6 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
     val state by vm.state.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val usbManager = remember {
-        context.getSystemService(android.content.Context.USB_SERVICE) as UsbManager
-    }
-    var usbRefresh by remember { mutableIntStateOf(0) }
-    val usbDevices = remember(usbRefresh) {
-        usbManager.deviceList.values.toList()
-    }
-
-    val saveLogLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri ->
-        if (uri != null) {
-            runCatching {
-                context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { writer ->
-                    writer.write(state.logs.joinToString(separator = "\\n"))
-                } ?: error("Unable to open the selected file.")
-            }.onFailure {
-    android.widget.Toast.makeText(
-        context,
-        "Unable to save log: ${it.message}",
-        android.widget.Toast.LENGTH_LONG
-    ).show()
-}
-        }
-    }
-
     LaunchedEffect(Unit) {
         vm.setLanguage("en")
 
@@ -201,108 +174,6 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                         vm.setKeepAwake(it)
                     },
                 )
-            }
-
-            HorizontalDivider()
-
-            Text(
-                "USB Diagnostics",
-                style = MaterialTheme.typography.titleSmall,
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    if (usbDevices.isEmpty()) "USB Status: Disconnected"
-                    else "USB Status: ${usbDevices.size} device(s) detected"
-                )
-                TextButton(onClick = { usbRefresh++ }) {
-                    Text("Refresh")
-                }
-            }
-
-            if (usbDevices.isEmpty()) {
-                Text(
-                    "Connect an ESP32-C3 board using USB OTG to view device details.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                usbDevices.forEach { device ->
-                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                device.deviceName,
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Text("Vendor ID: 0x${device.vendorId.toString(16).uppercase().padStart(4, '0')}")
-                            Text("Product ID: 0x${device.productId.toString(16).uppercase().padStart(4, '0')}")
-                            Text("USB Permission: ${if (usbManager.hasPermission(device)) "Granted" else "Not granted"}")
-                        }
-                    }
-                }
-            }
-
-            state.device?.let { detected ->
-                Text("Detected Chip: ${detected.chipId.label}")
-                Text("Flash Size: ${detected.flashSizeLabel}")
-                detected.macAddress?.let { Text("MAC Address: $it") }
-            }
-
-            HorizontalDivider()
-
-            Text(
-                "Flash Logs",
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(
-                "${state.logs.size} log entries available",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        saveLogLauncher.launch("esp32-c3-flasher-log.txt")
-                    },
-                    enabled = state.logs.isNotEmpty(),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Save Log")
-                }
-                OutlinedButton(
-                    onClick = {
-                        val logText = state.logs.joinToString(separator = "\\n")
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "ESP32 C3 Flasher Log")
-                            putExtra(Intent.EXTRA_TEXT, logText)
-                        }
-                        context.startActivity(
-                            Intent.createChooser(shareIntent, "Share Flash Log")
-                        )
-                    },
-                    enabled = state.logs.isNotEmpty(),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Share Log")
-                }
-            }
-            OutlinedButton(
-                onClick = { vm.clearLogs() },
-                enabled = state.logs.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Clear Logs")
             }
 
             HorizontalDivider()
