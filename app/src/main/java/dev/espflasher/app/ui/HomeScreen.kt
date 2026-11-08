@@ -2,6 +2,8 @@
 package dev.espflasher.app.ui
 
 import android.net.Uri
+import android.content.Intent
+import android.hardware.usb.UsbManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -47,6 +50,32 @@ fun HomeScreen(
 ) {
     val state by vm.state.collectAsState()
     val t = LocalUiText.current
+    val context = LocalContext.current
+    val saveLogLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { writer ->
+                    writer.write(state.logs.joinToString("\n"))
+                } ?: error("Unable to open the selected file.")
+            }.onFailure {
+                android.widget.Toast.makeText(
+                    context,
+                    "Unable to save log: ${it.message}",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+    val shareLog: () -> Unit = {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "ESP32 C3 Flasher Log")
+            putExtra(Intent.EXTRA_TEXT, state.logs.joinToString("\n"))
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Share Flash Log"))
+    }
     val view = LocalView.current
     val keepAwake = state.keepAwake && FlashStateMachine.isFlashing(state.phase)
 
@@ -100,7 +129,9 @@ fun HomeScreen(
                         pick.launch(
                             arrayOf("application/octet-stream", "*/*")
                         )
-                    }
+                    },
+                    onSaveLog = { saveLogLauncher.launch("esp32-c3-flasher-log.txt") },
+                    onShareLog = shareLog
                 )
         }
     }
@@ -132,6 +163,8 @@ private fun HomePane(
     vm: FlasherViewModel,
     padding: PaddingValues,
     onPick: () -> Unit,
+    onSaveLog: () -> Unit,
+    onShareLog: () -> Unit,
 ) {
     val t = LocalUiText.current
 
@@ -213,6 +246,7 @@ private fun HomePane(
             }
         }
 
+        UsbDiagnosticsCard()
         DeviceCard(state, vm)
         FirmwareCard(state, vm, onPick)
         OptionsCard(state, vm)
@@ -228,7 +262,59 @@ private fun HomePane(
             Text(t.flash)
         }
 
-        LogsCard(state)
+        LogsCard(state, onSaveLog, onShareLog)
+    }
+}
+
+@Composable
+private fun UsbDiagnosticsCard() {
+    val context = LocalContext.current
+    val usbManager = remember {
+        context.getSystemService(android.content.Context.USB_SERVICE) as UsbManager
+    }
+    var refreshKey by remember { mutableIntStateOf(0) }
+    val devices = remember(refreshKey) { usbManager.deviceList.values.toList() }
+
+    ElevatedCard(
+        shape = MaterialTheme.shapes.extraLarge,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+    ) {
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("USB Diagnostics", style = MaterialTheme.typography.titleMedium)
+                TextButton(onClick = { refreshKey++ }) { Text("Refresh") }
+            }
+            Text(
+                if (devices.isEmpty()) "USB Status: No device detected"
+                else "USB Status: ${devices.size} device(s) detected",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (devices.isEmpty()) {
+                Text(
+                    "Connect an ESP32-C3 board using USB OTG.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                devices.forEach { device ->
+                    HorizontalDivider()
+                    Text(device.deviceName, fontWeight = FontWeight.SemiBold)
+                    Text("Vendor ID: 0x${device.vendorId.toString(16).uppercase().padStart(4, '0')}")
+                    Text("Product ID: 0x${device.productId.toString(16).uppercase().padStart(4, '0')}")
+                    Text("USB Permission: ${if (usbManager.hasPermission(device)) "Granted" else "Not granted"}")
+                }
+            }
+        }
     }
 }
 
@@ -452,10 +538,19 @@ private fun OptionsCard(state: UiState, vm: FlasherViewModel) {
 }
 
 @Composable
-private fun LogsCard(state: UiState) {
+private fun LogsCard(
+    state: UiState,
+    onSaveLog: () -> Unit,
+    onShareLog: () -> Unit,
+) {
     val t = LocalUiText.current
-    var open by remember { mutableStateOf(false) }
+    var open by remember { mutableStateOf(true) }
     val clipboard = LocalClipboardManager.current
+    val logScrollState = rememberScrollState()
+
+    LaunchedEffect(state.logs.size, open) {
+        if (open) logScrollState.animateScrollTo(logScrollState.maxValue)
+    }
 
     ElevatedCard(
         shape = MaterialTheme.shapes.extraLarge,
@@ -464,31 +559,63 @@ private fun LogsCard(state: UiState) {
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(t.logs, style = MaterialTheme.typography.titleMedium)
+                Text("Flash Logs (${state.logs.size})", style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = { open = !open }) {
                     Text(if (open) t.hide else t.show)
                 }
             }
 
             if (open) {
-                Text(
-                    state.logs.joinToString("\n").ifEmpty { t.noLogs },
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    modifier = Modifier.heightIn(max = 220.dp),
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 64.dp, max = 220.dp)
+                        .verticalScroll(logScrollState),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (state.logs.isEmpty()) {
+                        Text(t.noLogs, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        state.logs.forEach { line ->
+                            Text(
+                                line,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onSaveLog,
+                        enabled = state.logs.isNotEmpty(),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Save Log") }
+                    OutlinedButton(
+                        onClick = onShareLog,
+                        enabled = state.logs.isNotEmpty(),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Share Log") }
+                }
 
                 TextButton(
                     onClick = {
-                        clipboard.setText(
-                            AnnotatedString(state.logs.joinToString("\n"))
-                        )
-                    }
+                        clipboard.setText(AnnotatedString(state.logs.joinToString("\n")))
+                    },
+                    enabled = state.logs.isNotEmpty()
                 ) {
                     Text(t.copyLogs)
                 }
