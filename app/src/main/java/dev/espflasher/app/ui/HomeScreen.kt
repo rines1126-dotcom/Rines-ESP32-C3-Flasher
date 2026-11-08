@@ -159,15 +159,11 @@ private fun HomePane(
                 contentScale = ContentScale.Fit
             )
             Text(
-                "Rines ESP32 Flasher",
+                "ESP32 C3 Flasher",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                "Flash ESP32 Family",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            
         }
 
         state.error?.let { err ->
