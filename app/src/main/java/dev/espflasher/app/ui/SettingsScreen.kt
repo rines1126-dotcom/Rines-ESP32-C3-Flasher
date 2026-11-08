@@ -49,8 +49,12 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                     writer.write(state.logs.joinToString(separator = "\\n"))
                 } ?: error("Unable to open the selected file.")
             }.onFailure {
-                updateMessage = "Unable to save log: ${it.message}"
-            }
+    android.widget.Toast.makeText(
+        context,
+        "Unable to save log: ${it.message}",
+        android.widget.Toast.LENGTH_LONG
+    ).show()
+}
         }
     }
 
