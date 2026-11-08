@@ -151,7 +151,7 @@ private fun HomePane(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.rines_logo),
                 contentDescription = "Rines ESP32 Flasher logo",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -344,7 +344,7 @@ private fun FirmwareCard(
                 state.images.forEach { img ->
                     Text(img.name, fontWeight = FontWeight.Medium)
                     Text(
-                        "${img.size / 1024} KB · 0x${img.address.toString(16).uppercase()}",
+                        "${img.size / 1024} KB 路 0x${img.address.toString(16).uppercase()}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
@@ -562,7 +562,7 @@ private fun FlashProgressPane(
 
         state.progress?.let {
             Text(
-                "${it.written / 1024} KB / ${it.total / 1024} KB · ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
+                "${it.written / 1024} KB / ${it.total / 1024} KB 路 ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
                 fontFamily = FontFamily.Monospace
             )
         }
@@ -610,7 +610,7 @@ private fun SuccessPane(
         Text(t.flashedOk.format(result.chipLabel))
         Spacer(Modifier.height(16.dp))
         Text(result.firmwareName)
-        Text("${result.size / 1024} KB · ${result.durationMs / 1000}s")
+        Text("${result.size / 1024} KB 路 ${result.durationMs / 1000}s")
         Text(if (result.verified) t.verificationPassed else t.verificationSkipped)
 
         Spacer(Modifier.height(24.dp))
