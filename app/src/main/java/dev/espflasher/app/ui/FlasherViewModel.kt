@@ -31,6 +31,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class UiState(
     val phase: FlashPhase = FlashPhase.Disconnected,
@@ -309,7 +312,9 @@ class FlasherViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun log(line: String) {
-        _state.update { it.copy(logs = (it.logs + line).takeLast(400)) }
+        val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        val timestampedLine = "[$timestamp] $line"
+        _state.update { it.copy(logs = (it.logs + timestampedLine).takeLast(400)) }
     }
 
     override fun onCleared() {
