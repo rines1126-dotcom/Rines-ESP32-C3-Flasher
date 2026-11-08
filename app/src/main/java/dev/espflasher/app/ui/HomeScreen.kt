@@ -1,4 +1,3 @@
-
 package dev.espflasher.app.ui
 
 import android.net.Uri
@@ -8,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,8 +25,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +47,7 @@ fun HomeScreen(
     val state by vm.state.collectAsState()
     val t = LocalUiText.current
     val context = LocalContext.current
+
     val saveLogLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
@@ -68,6 +65,7 @@ fun HomeScreen(
             }
         }
     }
+
     val shareLog: () -> Unit = {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -76,6 +74,7 @@ fun HomeScreen(
         }
         context.startActivity(Intent.createChooser(shareIntent, "Share Flash Log"))
     }
+
     val view = LocalView.current
     val keepAwake = state.keepAwake && FlashStateMachine.isFlashing(state.phase)
 
@@ -130,7 +129,9 @@ fun HomeScreen(
                             arrayOf("application/octet-stream", "*/*")
                         )
                     },
-                    onSaveLog = { saveLogLauncher.launch("esp32-c3-flasher-log.txt") },
+                    onSaveLog = {
+                        saveLogLauncher.launch("esp32-c3-flasher-log.txt")
+                    },
                     onShareLog = shareLog
                 )
         }
@@ -183,20 +184,11 @@ private fun HomePane(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.rines_logo),
-                contentDescription = "Rines ESP32 Flasher logo",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(110.dp),
-                contentScale = ContentScale.Fit
-            )
             Text(
                 "ESP32 C3 Flasher",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
-            
         }
 
         state.error?.let { err ->
@@ -244,6 +236,7 @@ private fun HomePane(
             isChipConnected = state.device != null,
             chipLabel = state.device?.chipId?.label
         )
+
         DeviceCard(state, vm)
         FirmwareCard(state, vm, onPick)
         OptionsCard(state, vm)
@@ -259,11 +252,14 @@ private fun HomePane(
             Text(t.flash)
         }
 
-        LogsCard(state, onSaveLog, onShareLog, onClearLog = vm::clearLogs)
+        LogsCard(
+            state,
+            onSaveLog,
+            onShareLog,
+            onClearLog = vm::clearLogs
+        )
     }
-}
-
-@Composable
+}@Composable
 private fun UsbDiagnosticsCard(
     isChipConnected: Boolean,
     chipLabel: String?
@@ -273,7 +269,9 @@ private fun UsbDiagnosticsCard(
         context.getSystemService(android.content.Context.USB_SERVICE) as UsbManager
     }
     var refreshKey by remember { mutableIntStateOf(0) }
-    val devices = remember(refreshKey) { usbManager.deviceList.values.toList() }
+    val devices = remember(refreshKey) {
+        usbManager.deviceList.values.toList()
+    }
 
     ElevatedCard(
         shape = MaterialTheme.shapes.extraLarge,
@@ -327,9 +325,12 @@ private fun UsbDiagnosticsCard(
 
             Text(
                 text = when {
-                    isChipConnected -> "The board is detected and connected to the bootloader."
-                    devices.isNotEmpty() -> "USB device detected, but the ESP32 chip is not connected yet."
-                    else -> "No USB device detected. Connect an ESP32-C3 board using USB OTG."
+                    isChipConnected ->
+                        "The board is detected and connected to the bootloader."
+                    devices.isNotEmpty() ->
+                        "USB device detected, but the ESP32 chip is not connected yet."
+                    else ->
+                        "No USB device detected. Connect an ESP32-C3 board using USB OTG."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -413,7 +414,10 @@ private fun DeviceCard(state: UiState, vm: FlasherViewModel) {
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
-                        AssistChip(onClick = {}, label = { Text(t.connected) })
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(t.connected) }
+                        )
                     }
                 }
 
@@ -459,15 +463,21 @@ private fun FirmwareCard(
             Text(t.firmware, style = MaterialTheme.typography.titleMedium)
 
             if (state.images.isEmpty()) {
-                Text(t.selectFirmware, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FilledTonalButton(onClick = onPick, shape = CircleShape) {
+                Text(
+                    t.selectFirmware,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FilledTonalButton(
+                    onClick = onPick,
+                    shape = CircleShape
+                ) {
                     Text(t.chooseFirmware)
                 }
             } else {
                 state.images.forEach { img ->
                     Text(img.name, fontWeight = FontWeight.Medium)
                     Text(
-                        "${img.size / 1024} KB 璺� 0x${img.address.toString(16).uppercase()}",
+                        "${img.size / 1024} KB · 0x${img.address.toString(16).uppercase()}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
@@ -476,8 +486,14 @@ private fun FirmwareCard(
                 state.compatibility
                     ?.takeIf { it.verdict.name == "MISMATCH" }
                     ?.let {
-                        Text(t.mismatchBanner, color = MaterialTheme.colorScheme.error)
-                        Text(it.message, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            t.mismatchBanner,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            it.message,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -491,9 +507,7 @@ private fun FirmwareCard(
             }
         }
     }
-}
-
-@Composable
+}@Composable
 private fun OptionsCard(state: UiState, vm: FlasherViewModel) {
     val t = LocalUiText.current
     var advanced by remember { mutableStateOf(false) }
@@ -611,7 +625,10 @@ private fun LogsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Flash Logs (${state.logs.size})", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Flash Logs (${state.logs.size})",
+                    style = MaterialTheme.typography.titleMedium
+                )
                 TextButton(onClick = { open = !open }) {
                     Text(if (open) t.hide else t.show)
                 }
@@ -626,7 +643,10 @@ private fun LogsCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (state.logs.isEmpty()) {
-                        Text(t.noLogs, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            t.noLogs,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     } else {
                         state.logs.forEach { line ->
                             Text(
@@ -646,17 +666,24 @@ private fun LogsCard(
                         onClick = onSaveLog,
                         enabled = state.logs.isNotEmpty(),
                         modifier = Modifier.weight(1f)
-                    ) { Text("Save Log") }
+                    ) {
+                        Text("Save Log")
+                    }
+
                     OutlinedButton(
                         onClick = onShareLog,
                         enabled = state.logs.isNotEmpty(),
                         modifier = Modifier.weight(1f)
-                    ) { Text("Share Log") }
+                    ) {
+                        Text("Share Log")
+                    }
                 }
 
                 TextButton(
                     onClick = {
-                        clipboard.setText(AnnotatedString(state.logs.joinToString("\n")))
+                        clipboard.setText(
+                            AnnotatedString(state.logs.joinToString("\n"))
+                        )
                     },
                     enabled = state.logs.isNotEmpty()
                 ) {
@@ -676,9 +703,15 @@ private fun LogsCard(
 
     if (showClearConfirmation) {
         AlertDialog(
-            onDismissRequest = { showClearConfirmation = false },
-            title = { Text("Clear Flash Logs?") },
-            text = { Text("This will permanently clear the current log entries.") },
+            onDismissRequest = {
+                showClearConfirmation = false
+            },
+            title = {
+                Text("Clear Flash Logs?")
+            },
+            text = {
+                Text("This will permanently clear the current log entries.")
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -690,15 +723,17 @@ private fun LogsCard(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearConfirmation = false }) {
+                TextButton(
+                    onClick = {
+                        showClearConfirmation = false
+                    }
+                ) {
                     Text("Cancel")
                 }
             }
         )
     }
-}
-
-@Composable
+}@Composable
 private fun FlashProgressPane(
     state: UiState,
     vm: FlasherViewModel,
@@ -755,18 +790,24 @@ private fun FlashProgressPane(
         }
 
         Spacer(Modifier.height(16.dp))
-        Text(t.phaseTitle(state.phase), style = MaterialTheme.typography.titleMedium)
+        Text(
+            t.phaseTitle(state.phase),
+            style = MaterialTheme.typography.titleMedium
+        )
 
         state.progress?.let {
             Text(
-                "${it.written / 1024} KB / ${it.total / 1024} KB 璺� ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
+                "${it.written / 1024} KB / ${it.total / 1024} KB · ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
                 fontFamily = FontFamily.Monospace
             )
         }
 
         Spacer(Modifier.height(24.dp))
 
-        OutlinedButton(onClick = vm::cancelFlash, shape = CircleShape) {
+        OutlinedButton(
+            onClick = vm::cancelFlash,
+            shape = CircleShape
+        ) {
             Text(t.cancel)
         }
     }
@@ -807,8 +848,11 @@ private fun SuccessPane(
         Text(t.flashedOk.format(result.chipLabel))
         Spacer(Modifier.height(16.dp))
         Text(result.firmwareName)
-        Text("${result.size / 1024} KB 璺� ${result.durationMs / 1000}s")
-        Text(if (result.verified) t.verificationPassed else t.verificationSkipped)
+        Text("${result.size / 1024} KB · ${result.durationMs / 1000}s")
+        Text(
+            if (result.verified) t.verificationPassed
+            else t.verificationSkipped
+        )
 
         Spacer(Modifier.height(24.dp))
 
