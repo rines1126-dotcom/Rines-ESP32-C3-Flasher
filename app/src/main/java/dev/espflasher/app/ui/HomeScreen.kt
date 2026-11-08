@@ -217,12 +217,6 @@ private fun HomePane(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
-                        Spacer(Modifier.height(12.dp))
-                        FilledTonalButton(
-                            onClick = { vm.connectAttachedOrPrompt() }
-                        ) {
-                            Text(t.errorAction(err.code))
-                        }
                     }
                 }
             }
@@ -426,7 +420,7 @@ private fun FirmwareCard(
                 state.images.forEach { img ->
                     Text(img.name, fontWeight = FontWeight.Medium)
                     Text(
-                        "${img.size / 1024} KB 路 0x${img.address.toString(16).uppercase()}",
+                        "${img.size / 1024} KB 璺� 0x${img.address.toString(16).uppercase()}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
@@ -718,7 +712,7 @@ private fun FlashProgressPane(
 
         state.progress?.let {
             Text(
-                "${it.written / 1024} KB / ${it.total / 1024} KB 路 ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
+                "${it.written / 1024} KB / ${it.total / 1024} KB 璺� ${"%.1f".format(it.bytesPerSec / 1024)} KB/s",
                 fontFamily = FontFamily.Monospace
             )
         }
@@ -766,7 +760,7 @@ private fun SuccessPane(
         Text(t.flashedOk.format(result.chipLabel))
         Spacer(Modifier.height(16.dp))
         Text(result.firmwareName)
-        Text("${result.size / 1024} KB 路 ${result.durationMs / 1000}s")
+        Text("${result.size / 1024} KB 璺� ${result.durationMs / 1000}s")
         Text(if (result.verified) t.verificationPassed else t.verificationSkipped)
 
         Spacer(Modifier.height(24.dp))
