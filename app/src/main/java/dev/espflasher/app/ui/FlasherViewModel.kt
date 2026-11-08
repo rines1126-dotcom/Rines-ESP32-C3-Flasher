@@ -304,6 +304,10 @@ class FlasherViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(error = error, phase = FlashPhase.Error) }
     }
 
+    fun clearLogs() {
+        _state.update { it.copy(logs = emptyList()) }
+    }
+
     private fun log(line: String) {
         _state.update { it.copy(logs = (it.logs + line).takeLast(400)) }
     }
