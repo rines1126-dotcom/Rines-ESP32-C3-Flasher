@@ -262,7 +262,7 @@ private fun HomePane(
             Text(t.flash)
         }
 
-        LogsCard(state, onSaveLog, onShareLog)
+        LogsCard(state, onSaveLog, onShareLog, onClearLog = vm::clearLogs)
     }
 }
 
@@ -542,9 +542,11 @@ private fun LogsCard(
     state: UiState,
     onSaveLog: () -> Unit,
     onShareLog: () -> Unit,
+    onClearLog: () -> Unit,
 ) {
     val t = LocalUiText.current
     var open by remember { mutableStateOf(true) }
+    var showClearConfirmation by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     val logScrollState = rememberScrollState()
 
@@ -619,8 +621,39 @@ private fun LogsCard(
                 ) {
                     Text(t.copyLogs)
                 }
+
+                OutlinedButton(
+                    onClick = { showClearConfirmation = true },
+                    enabled = state.logs.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Clear Logs")
+                }
             }
         }
+    }
+
+    if (showClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmation = false },
+            title = { Text("Clear Flash Logs?") },
+            text = { Text("This will permanently clear the current log entries.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onClearLog()
+                        showClearConfirmation = false
+                    }
+                ) {
+                    Text("Clear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
