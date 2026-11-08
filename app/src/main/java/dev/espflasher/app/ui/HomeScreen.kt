@@ -259,7 +259,7 @@ private fun DeviceCard(state: UiState, vm: FlasherViewModel) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Connect an ESP32-family board using USB OTG.",
+                    "Connect an ESP32-C3 board using USB OTG.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
