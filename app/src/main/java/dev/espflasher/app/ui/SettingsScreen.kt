@@ -1,4 +1,3 @@
-
 package dev.espflasher.app.ui
 
 import android.content.ClipData
@@ -18,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import dev.espflasher.app.UpdateInfo
 import dev.espflasher.app.UpdateManager
@@ -31,6 +31,7 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
     val state by vm.state.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         vm.setLanguage("en")
 
@@ -250,7 +251,7 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                         Intent(
                             Intent.ACTION_VIEW,
                             Uri.parse(
-                                "https://rines1126-dotcom.github.io/Rines-ESP32-C3-Flasher/privacy-policy/"
+                                "https://github.com/rines1126-dotcom/Rines-ESP32-C3-Flasher/blob/main/docs/privacy-policy/index.html"
                             ),
                         ),
                     )
@@ -263,6 +264,23 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                 "Your settings are saved on this device.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = "RINES",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    letterSpacing = 2.sp,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                    alpha = 0.35f
+                ),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
     }
