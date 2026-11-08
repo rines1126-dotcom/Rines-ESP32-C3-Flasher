@@ -8,30 +8,18 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import dev.espflasher.app.UpdateInfo
 import dev.espflasher.app.UpdateManager
-import dev.espflasher.app.domain.prefs.Accent
 import dev.espflasher.app.domain.prefs.ThemeMode
-import dev.espflasher.app.ui.i18n.LocalUiText
-import dev.espflasher.app.ui.theme.accentSwatch
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -39,11 +27,8 @@ import java.io.File
 @Composable
 fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
     val state by vm.state.collectAsState()
-    val t = LocalUiText.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    val dynamicOk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     LaunchedEffect(Unit) {
         vm.setLanguage("en")
@@ -176,47 +161,6 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                 )
             }
 
-            Text(
-                "Color",
-                style = MaterialTheme.typography.titleSmall,
-            )
-
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (dynamicOk) {
-                    AccentDot(
-                        selected = state.accent == Accent.DYNAMIC,
-                        label = "Dynamic",
-                        dynamic = true,
-                        color = accentSwatch(Accent.TEAL),
-                        onClick = {
-                            vm.setAccent(Accent.DYNAMIC)
-                        },
-                    )
-                }
-
-                listOf(
-                    Accent.TEAL to "Teal",
-                    Accent.RASPBERRY to "Raspberry",
-                    Accent.INDIGO to "Indigo",
-                    Accent.AMBER to "Amber",
-                    Accent.FOREST to "Forest",
-                ).forEach { (accent, label) ->
-                    AccentDot(
-                        selected = state.accent == accent,
-                        label = label,
-                        dynamic = false,
-                        color = accentSwatch(accent),
-                        onClick = {
-                            vm.setAccent(accent)
-                        },
-                    )
-                }
-            }
-
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -293,6 +237,11 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
             }
 
             HorizontalDivider()
+
+            Text(
+                "Support & Information",
+                style = MaterialTheme.typography.titleSmall,
+            )
 
             TextButton(
                 onClick = {
@@ -404,60 +353,6 @@ fun SettingsScreen(vm: FlasherViewModel, onBack: () -> Unit) {
                 }
             },
             confirmButton = {},
-        )
-    }
-}
-
-@Composable
-private fun AccentDot(
-    selected: Boolean,
-    label: String,
-    dynamic: Boolean,
-    color: Color,
-    onClick: () -> Unit,
-) {
-    val border = if (selected) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.outline
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick),
-    ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .then(
-                    if (dynamic) {
-                        Modifier.background(
-                            Brush.sweepGradient(
-                                listOf(
-                                    Color(0xFFC51A4A),
-                                    Color(0xFF3F51B5),
-                                    Color(0xFF0F7A7A),
-                                    Color(0xFFF5C518),
-                                    Color(0xFFC51A4A),
-                                ),
-                            ),
-                        )
-                    } else {
-                        Modifier.background(color)
-                    },
-                )
-                .border(
-                    if (selected) 3.dp else 1.dp,
-                    border,
-                    CircleShape,
-                ),
-        )
-
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(top = 6.dp),
         )
     }
 }
