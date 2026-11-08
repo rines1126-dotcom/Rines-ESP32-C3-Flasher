@@ -240,7 +240,10 @@ private fun HomePane(
             }
         }
 
-        UsbDiagnosticsCard()
+        UsbDiagnosticsCard(
+            isChipConnected = state.device != null,
+            chipLabel = state.device?.chipId?.label
+        )
         DeviceCard(state, vm)
         FirmwareCard(state, vm, onPick)
         OptionsCard(state, vm)
@@ -261,7 +264,10 @@ private fun HomePane(
 }
 
 @Composable
-private fun UsbDiagnosticsCard() {
+private fun UsbDiagnosticsCard(
+    isChipConnected: Boolean,
+    chipLabel: String?
+) {
     val context = LocalContext.current
     val usbManager = remember {
         context.getSystemService(android.content.Context.USB_SERVICE) as UsbManager
@@ -285,27 +291,68 @@ private fun UsbDiagnosticsCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("USB Diagnostics", style = MaterialTheme.typography.titleMedium)
-                TextButton(onClick = { refreshKey++ }) { Text("Refresh") }
+                Text("USB Connection", style = MaterialTheme.typography.titleMedium)
+                TextButton(onClick = { refreshKey++ }) {
+                    Text("Refresh")
+                }
             }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val statusColor = if (isChipConnected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = statusColor,
+                    modifier = Modifier.size(10.dp)
+                ) {}
+
+                Text(
+                    text = if (isChipConnected) {
+                        "${chipLabel ?: "ESP32"} Connected"
+                    } else {
+                        "Disconnected"
+                    },
+                    color = statusColor,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             Text(
-                if (devices.isEmpty()) "USB Status: No device detected"
-                else "USB Status: ${devices.size} device(s) detected",
+                text = when {
+                    isChipConnected -> "The board is detected and connected to the bootloader."
+                    devices.isNotEmpty() -> "USB device detected, but the ESP32 chip is not connected yet."
+                    else -> "No USB device detected. Connect an ESP32-C3 board using USB OTG."
+                },
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (devices.isEmpty()) {
-                Text(
-                    "Connect an ESP32-C3 board using USB OTG.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
+
+            if (devices.isNotEmpty()) {
                 devices.forEach { device ->
                     HorizontalDivider()
-                    Text(device.deviceName, fontWeight = FontWeight.SemiBold)
-                    Text("Vendor ID: 0x${device.vendorId.toString(16).uppercase().padStart(4, '0')}")
-                    Text("Product ID: 0x${device.productId.toString(16).uppercase().padStart(4, '0')}")
-                    Text("USB Permission: ${if (usbManager.hasPermission(device)) "Granted" else "Not granted"}")
+                    Text(
+                        device.deviceName,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Vendor ID: 0x${device.vendorId.toString(16).uppercase().padStart(4, '0')}"
+                    )
+                    Text(
+                        "Product ID: 0x${device.productId.toString(16).uppercase().padStart(4, '0')}"
+                    )
+                    Text(
+                        "USB Permission: ${
+                            if (usbManager.hasPermission(device)) "Granted" else "Not granted"
+                        }"
+                    )
                 }
             }
         }
